@@ -32,17 +32,19 @@ class AnnotateVariableTypes(ast.NodeTransformer):
     def __init__(self):
         self.current_function = None
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
-        self.current_function = node.name
+    # def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
+    #     self.current_function = node.name
 
-        # Extract type annotations from function arguments
-        arg_types: typing.Dict[str, ast.expr] = {}
-        for arg in node.args.args:
-            if arg.annotation:
-                arg_types[arg.arg] = arg.annotation
+    #     # Extract type annotations from function arguments
+    #     arg_types: typing.Dict[str, ast.expr] = {}
+    #     for arg in node.args.args:
+    #         if arg.annotation:
+    #             arg_types[arg.arg] = arg.annotation   
     
     def visit_Assign(self, node: ast.Assign) -> ast.AnnAssign:
+        print("Visiting ASSIGN")
         inferred_type = self._infer_type(node.value)
+        print("Inferred type: ", inferred_type)
         if inferred_type is not None:
             annotation = ast.Name(id=inferred_type, ctx=ast.Load())
             ann_assign = ast.AnnAssign(
@@ -52,7 +54,12 @@ class AnnotateVariableTypes(ast.NodeTransformer):
         return self.generic_visit(node)
 
     def _infer_type(self, node: ast.AST) -> str:
+        print("NODE", node)
         if isinstance(node, ast.Constant):
             return type(node.value).__name__
         # Add more type inference logic here if needed
+
+        if isinstance(node, ast.BinOp):
+            if isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Mod, ast.Pow)):
+                return "str"
         return None
